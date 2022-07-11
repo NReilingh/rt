@@ -3453,6 +3453,28 @@ sub _ProcessObjectCustomFieldUpdates {
                     Value => $value,
                 );
 
+                # The specification we've implemented for the checkbox render type
+                # is that an unset custom field is logically considered the same as
+                # having the explicit "unchecked" value (the first value), and that
+                # it is preferred to store the explicit "unchecked" value rather than
+                # leaving the field unset.
+                # Therefore this condition here, where the field didn't have a value
+                # and now is being set to the "unchecked" value, does not represent
+                # a logical change in the state of the field and should not show in
+                # the transaction history.
+                if (
+                    $cf_type eq 'Select' and
+                    $cf->RenderType eq 'Checkbox' and
+                    not defined $cf_values->First and
+                    lc $value eq lc $cf_values->First->Name
+                ) {
+                    my ( $val, $msg ) = $args{'Object'}->AddCustomFieldValue(
+                        Field             => $cf,
+                        Value             => $value,
+                        RecordTransaction => 0,
+                    );
+                }
+
                 my ( $val, $msg ) = $args{'Object'}->AddCustomFieldValue(
                     Field => $cf,
                     Value => $value

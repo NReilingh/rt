@@ -102,6 +102,7 @@ sub ValidateName {
 
 sub Delete {
     my $self = shift;
+
     my ( $ret, $msg ) = $self->SUPER::Delete;
     $self->CustomFieldObj->CleanupDefaultValues;
     return ( $ret, $msg );
