@@ -44,7 +44,7 @@ var showModal = function(html) {
 
     // We need to refresh the select picker plugin on AJAX calls
     // since the plugin only runs on page load.
-    jQuery('.selectpicker').selectpicker('refresh');
+    refreshSelectpicker();
     RT.Autocomplete.bind(modal);
 };
 
@@ -1315,6 +1315,8 @@ jQuery(function () {
             });
         });
     });
+
+    updateSelectpickerLiveSearch();
 });
 
 // focus jquery object in window, only moving the screen when necessary
@@ -1405,4 +1407,19 @@ function toggleTransactionDetails () {
     }
 
     return false;
+}
+
+function updateSelectpickerLiveSearch (element) {
+    element ||= jQuery('.selectpicker');
+    element.filter(':not([data-live-search])').each(function() {
+        // Unlike WebPath, SelectLiveSearchLimit is not a real RT config, but
+        // can also be customized in Data callback of /Elements/JavascriptConfig
+        jQuery(this).attr('data-live-search', jQuery(this).find('option').length >= (RT.Config.SelectLiveSearchLimit || 10) ? true : false );
+    });
+}
+
+function refreshSelectpicker (element) {
+    element ||= jQuery('.selectpicker');
+    updateSelectpickerLiveSearch(element);
+    element.selectpicker('refresh');
 }
