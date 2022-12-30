@@ -68,6 +68,7 @@
         <th class="collection-as-table"><&|/l&>Name</&></th>
         <th class="collection-as-table"><&|/l&>Type</&></th>
         <th class="collection-as-table"><&|/l&>Enabled</&></th>
+        <th class="collection-as-table"><&|/l&>Queues Applied</&></th>
       </tr>
 % my $i = 0;
 % for my $key ( sort keys %lifecycles ) {
@@ -82,6 +83,21 @@
             <input type="checkbox" class="custom-control-input checkbox" id="enable-lifecycle-<% $key %>" name="enable-lifecycle-<% $key %>" value="1" <% $lifecycles{$key}{'disabled'} ? '' : 'checked="checked"' %> />
             <label class="custom-control-label" for="enable-lifecycle-<% $key %>"></label>
           </div>
+        </td>
+        <td class="collection-as-table">
+%    if ( $lifecycles{$key}{'queues'} ) {
+%      my $j = 1;
+%      my @queues = @{$lifecycles{$key}{'queues'}};
+%      for my $queue ( @queues ) {
+          <a href="<% RT->Config->Get('WebURL') %>Admin/Queues/Modify.html?id=<% $queue->id() %>"
+            target="_blank"><% $queue->Name() %></a><% 
+                      (($j < scalar @queues)||$lifecycles{$key}{'show_more_queues_link'}) ? ', ' : '' %>
+%        $j++;
+%      }
+%      if ( $lifecycles{$key}{'show_more_queues_link'} ) {
+            <a href="<% RT->Config->Get('WebURL') %>Admin/Queues" target="_blank"><&|/l&>More...</&></a>
+%      }
+%    }
         </td>
       </tr>
 %    ++$i;
@@ -101,7 +117,22 @@
 <%INIT>
 my @results;
 
+use constant MAX_QUEUES_PER_LIFECYCLE => 15;
 my %lifecycles = %{RT::Config->Get('Lifecycles')};
+for my $key ( keys %lifecycles ) {
+    next if grep { $key eq $_ } qw/approvals __maps__/;
+    next if $lifecycles{$key}{'type'} && $lifecycles{$key}{'type'} ne 'ticket';
+    my $lifecycle = RT::Lifecycle->Load($key);
+    my $queues = $lifecycle->Queues();
+    $queues->RowsPerPage(MAX_QUEUES_PER_LIFECYCLE);
+    my @queuesarray = @{$queues->ItemsArrayRef()};
+    if ($queues->CountAll()) {
+      $lifecycles{$key}{'queues'} = \@queuesarray;
+      if ($queues->CountAll() > MAX_QUEUES_PER_LIFECYCLE) {
+          $lifecycles{$key}{'show_more_queues_link'} = 1;
+      }
+    }
+}
 
 if ($Submit) {
     my $changed;
