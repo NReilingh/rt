@@ -230,5 +230,22 @@ of the last reply on stalled tickets, you could do something like:
         --transaction last \
         --transaction-type Correspond
 
+=head1 Combine multiple actions
+
+You can combine multiple actions in a single command. For example, you
+can set up a command that escalates and increases the priority of overdue tickets
+that are 'new' or 'stalled', and also changes their status to open.
+
+    /opt/rt5/bin/rt-crontool \
+        --search RT::Search::FromSQL \
+        --search-arg "(Status='new' OR Status = 'stalled')" \
+        --condition RT::Condition::Overdue \
+        --action RT::Action::SetPriority \
+        --action-arg 99 \
+        --action RT::Action::LinearEscalate \
+        --action-arg "RecordTransaction: 1" \
+        --action RT::Action::SetStatus \
+        --action-arg open
+
 
 =cut

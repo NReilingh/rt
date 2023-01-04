@@ -370,6 +370,20 @@ rt-crontool - a tool to act on tickets from an external scheduling tool
         --action RT::Action::SomeTimeConsumingAction
         --max-processes 10 --max-tickets-per-process 100
 
+    # Combine multiple actions:
+    # Find all tickets that are 'new' or 'stalled' and set their priority to 99 if they are overdue
+    # also, escalate them and set their status to open:
+      rt-crontool \
+        --search RT::Search::FromSQL \
+        --search-arg "(Status='new' OR Status = 'stalled')" \
+        --condition RT::Condition::Overdue \
+        --action RT::Action::SetPriority \
+        --action-arg 99 \
+        --action RT::Action::LinearEscalate \
+        --action-arg "RecordTransaction: 1" \
+        --action RT::Action::SetStatus \
+        --action-arg open
+
 =head1 DESCRIPTION
 
 This script is a tool to act on tickets from an external scheduling tool, such
